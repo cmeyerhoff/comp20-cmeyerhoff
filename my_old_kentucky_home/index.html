@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8" />
+		<title>My Old Kentucky Home</title>
+		<link rel="stylesheet" href="style.css" type="text/css" />
+	</head>
+
+	<body>
+
+		<h1 id="title">My Old Kentucky Home</h1>
+
+		<video src="https://www.cs.tufts.edu/comp/20/my_old_kentucky_home.mp4" id="music_video" controls></video>
+		<div id="lyrics"></div>
+
+		<script>
+			var displayLyrics = document.getElementById("lyrics");  // lyrics or pictures to be displayed
+			var	video = document.getElementById("music_video");
+			var lyricList = [];
+			var changeLyricTime = [7, 13, 20, 26, 34, 41, 48, 54, 62, 68, 75, 78, 82, 92, 96]; //upper bound to change lyric/picture
+			var i = 0; // counter to increment what is being displayed
+			lyricList = [ 
+				'<img src="random_dog.jpg" alt="random_dog" width=320 height=240 />' , 
+				"The sun shines bright in My Old Kentucky Home" ,
+				"'Tis summer, the people are gay" ,
+				"The corn-top's ripe and the meadow's in the bloom" ,
+				"While the birds make music all the day." ,
+
+				"The young folks roll on the little cabin floor, " ,
+				"All merry, all happy and bright; " ,
+				"By 'n' by hard times comes a knocking at the door," , 
+				"Then My Old Kentucky Home, good night! " ,
+
+				"Weep no more my lady" ,
+				"Oh weep no more today; " ,
+				"We will sing one song" ,
+				"For My Old Kentucky Home" ,
+				"For My Old Kentucky Home, far away",
+				'<img src="farewell.jpg" alt="goodbye picture" width=400 height=300 />' ];
+
+			// annotates lyrics in forward direction, will not work in reverse. Could be modified to do so by making lyric times
+			// ranges instead of just a switching point. Determined this did what the assignment asked, and eschwed need for writing out the 15 or so if statements that could be needed in alternate methods.
+			video.addEventListener("timeupdate", function() {
+				if(video.currentTime < changeLyricTime[i]) {  // Original check. If time less than switching time, display lyrics
+					if(i == 0){ // if first thing to be displayed, do not check if time > the previoud switch time
+						displayLyrics.innerHTML = "<p>" + lyricList[i] + "</p>";
+					} else if (video.currentTime > changeLyricTime[i-1]) {
+						displayLyrics.innerHTML = "<p>" + lyricList[i] + "</p>"; 
+					} else {
+						i--; // adds reverse functionality
+					}
+				}
+				else if(i >= 15){ console.log("all done");} // stops updating after lyrics completed and final image displayed
+				else {
+					i++;
+				}
+			});
+
+
+				/* image sources: https://s-media-cache-ak0.pinimg.com/originals/93/fb/c8/93fbc89e6315e8b54674e3996a2491b8.jpg 
+				   https://cdn.meme.am/instances/500x/65685652/crying-cat-well-miss-you-farewell-lots-of-success.jpg
+				*/
+
+		</script>
+	</body>
+
+
+</html>	
