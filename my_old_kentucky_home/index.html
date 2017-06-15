@@ -38,24 +38,22 @@
 				"For My Old Kentucky Home, far away",
 				'<img src="farewell.jpg" alt="goodbye picture" width=400 height=300 />' ];
 
-			// annotates lyrics in forward direction, will not work in reverse. Could be modified to do so by making lyric times
-			// ranges instead of just a switching point. Determined this did what the assignment asked, and eschwed need for writing out the 15 or so if statements that could be needed in alternate methods.
+
 			video.addEventListener("timeupdate", function() {
-				if(video.currentTime < changeLyricTime[i]) {  // Original check. If time less than switching time, display lyrics
-					if(i == 0){ // if first thing to be displayed, do not check if time > the previoud switch time
+				if(video.currentTime < changeLyricTime[i]) {  // Original check. If time less than switching time, display lyrics, if not, increment i and display new lyrics. Was elegant but does not work in reverse.
+					if(i == 0){ // if first thing to be displayed, do not check if time > the previous switch time
 						displayLyrics.innerHTML = "<p>" + lyricList[i] + "</p>";
-					} else if (video.currentTime > changeLyricTime[i-1]) {
+					} else if (video.currentTime > changeLyricTime[i-1]) { 
 						displayLyrics.innerHTML = "<p>" + lyricList[i] + "</p>"; 
 					} else {
 						i--; // adds reverse functionality
 					}
 				}
-				else if(i >= 15){ console.log("all done");} // stops updating after lyrics completed and final image displayed
-				else {
+				// doesn't keep going and incrementing i because timeupdate stops happening when the video ends.
+				else {  
 					i++;
 				}
 			});
-
 
 				/* image sources: https://s-media-cache-ak0.pinimg.com/originals/93/fb/c8/93fbc89e6315e8b54674e3996a2491b8.jpg 
 				   https://cdn.meme.am/instances/500x/65685652/crying-cat-well-miss-you-farewell-lots-of-success.jpg
