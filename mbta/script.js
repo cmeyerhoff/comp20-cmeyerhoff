@@ -35,6 +35,11 @@ function init(){
 	 '{"station":"Ashmont","lat":42.284652,"lng":-71.06448899999999}]]';
 
 	var parsedData = JSON.parse(jsonString);
+
+	var iconBase = 'https://maps.google.com/mapfiles/kml/shapes/';
+	var altpin = 'pin.png';
+
+	// pin image source: https://d30y9cdsu7xlg0.cloudfront.net/png/5091-200.png
 	
 	// Do the same thing for both of the separate lists of stations
 	for(n = 0; n < 2; n++){
@@ -44,7 +49,8 @@ function init(){
 			// Add markers for each station
 			var tempMarker = new google.maps.Marker({
 					position: tempStation,
-					title: parsedData[n][i].station
+					title: parsedData[n][i].station,
+					icon: altpin
 				});
 			tempMarker.setMap(map);
 			// Add lat-long pairs to another object in correct format for polyline drawing
