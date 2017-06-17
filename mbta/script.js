@@ -41,7 +41,7 @@ function init(){
 
 	// pin image source: https://d30y9cdsu7xlg0.cloudfront.net/png/5091-200.png
 	
-	// Do the same thing for both of the separate lists of stations
+	// Do the same thing for both of the separate lists of stations within the larger array
 	for(n = 0; n < 2; n++){
 		var latLongPairs = [];
 		for(i = 0; i < parsedData[n].length; i++){
