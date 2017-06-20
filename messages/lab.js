@@ -9,11 +9,13 @@ function parse(){
 		if (XMLrequest.readyState == 4) {
 			var reponse = XMLrequest.responseText;
 			parsedData = JSON.parse(reponse);
-			console.log(reponse);
-			console.log(parsedData[0]['content']);
 			messages = document.getElementById("messages");
 		      for (i = 0; i <parsedData.length; i++) {
-		        messages.innerHTML += parsedData[i]['content'] + " " + parsedData[i]['username'] + "<br>";
+		      	var text = '<div class="single">' + parsedData[i]['content'];
+		      	text = text + '<span class ="username">' + parsedData[i]['username'] + "</span></div>";
+		        messages.innerHTML += text;
+		      	// setting innerHTML in one line worked, but wanted to split it up into more for readibility
+		      	// messages.innerHTML += '<div class="single">' + parsedData[i]['content'] + '<span class ="username">' + parsedData[i]['username'] + "</span></div>";
 		      } 
 	  }
 	}
@@ -28,3 +30,4 @@ function parse(){
 
 // part 3 seems to be cross origin request though, no? Hosting a server locally, and then gets stuff from another server?
 // fetching files from not the same site that the page (mine) is from
+// they probably have CORS on

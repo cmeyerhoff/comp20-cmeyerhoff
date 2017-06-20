@@ -1,1 +1,16 @@
 /* Your CSS here... */
+
+.single{ /* for a single message */
+	background-color: lightblue;
+	font-size: 16pt;
+	padding: 10px;
+	width: 30%;
+	background-clip: content-box;
+}
+
+.username{
+	font-size: 9pt;
+	padding-left: 4px;
+}
+
+/* referenced: https://stackoverflow.com/questions/14628601/can-i-add-background-color-only-for-padding */
