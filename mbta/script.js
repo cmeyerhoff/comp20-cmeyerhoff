@@ -1,7 +1,5 @@
 function init(){
 	var southStation = new google.maps.LatLng(42.352271, -71.05524200000001);
-	//var userLat = 0;
-	//var userLng = 0;
 	var userLocation;
 	var closestStop = {"station":"nostation", "lat":0, "lng":0, "distance":100000000000000000000};
 
@@ -34,10 +32,7 @@ function init(){
 
 	var parsedData = JSON.parse(jsonString);
 	var iconBase = 'https://maps.google.com/mapfiles/kml/shapes/';
-	var altpin = 'pin.png';
-
-	// pin image source: https://d30y9cdsu7xlg0.cloudfront.net/png/5091-200.png
-
+	var altpin = 'pin.png'; // pin image source: https://d30y9cdsu7xlg0.cloudfront.net/png/5091-200.png
 
 	var map = new google.maps.Map(document.getElementById("map"), {
 		zoom: 12, 
@@ -45,14 +40,25 @@ function init(){
 		mapTypeId: google.maps.MapTypeId.ROADMAP
 	});
 
+
+	
+	
+
+
+	//Triplist.Trips[i]
+
+	// referenced geolocation_map.html in examples
+
+	// this setup takes time and holds up putting other markers/stations on the map, but it allows the processing
+	// of data/looping through all the station JSON data once, as opposed to multiple times (once to populate the page,
+	// and another to calculate the distance from the user to every station. Could be changed for user experience, but 
+	// would be slightly less efficient resource wise - unless the time waiting is wasted anyway...)
 	if(navigator.geolocation){
 		navigator.geolocation.getCurrentPosition(function(position){  // change position name to make sure you understand
 			// for whatever reason, setting externally created variable in here did not work. Guessing becuase
 			// how javascripts garbage collection works (used new keyword inside if statement - deleted after?)
 			userLocation = new google.maps.LatLng(position.coords.latitude, position.coords.longitude);
-
-			// add marker and info window here?
-			var tempMarker = new google.maps.Marker({
+			var tempMarker = new google.maps.Marker({ // Add marker
 					position: userLocation,
 					title: "This is me."
 				});
@@ -60,13 +66,16 @@ function init(){
 			map.panTo(userLocation);
 
 			
-			
+			// Adding info winow with good data and draw polyline on callback from processData()
 			processData(function(){
 				var info = new google.maps.InfoWindow();
 				google.maps.event.addListener(tempMarker, 'click', function() {
+					// source for conversion: https://stackoverflow.com/questions/20674439/how-to-convert-meter-to-miles
+					// random comment suggested good method for getting decimal places:
+					// https://stackoverflow.com/questions/1726630/formatting-a-number-with-exactly-two-decimals-in-javascript
 					var temp = closestStop.station + " - distance: " + Math.round((closestStop.distance/1609.344)*100)/100 + " miles";
 					info.setContent(temp); // this needs to display distance to nearest stop (and name)
-					info.open(map, tempMarker);
+					info.open(map, tempMarker); // switch to this?
 				});
 				var polyline = new google.maps.Polyline({
 		          path: [userLocation,{lat: closestStop.lat, lng: closestStop.lng}],
@@ -88,16 +97,19 @@ function init(){
 			
 		});
 	} 
+
+
 	else {
-		alert("Geolocation is not supported by your web browser.  What a shame!");
+		alert("Geolocation not supported/unavailable.");
 	}
 
-	// calculate smallest distance in this loop! - dont need to modfy latLongPairs that way
+	
 	function processData(callback){
 	// Do the same thing for both of the separate lists of stations within the larger array
 		for(n = 0; n < 2; n++){
 			var latLongPairs = [];
 
+			// calculate smallest distance in this loop! - dont need to modfy latLongPairs that way
 			// Add markers and prepare data for polylines
 			for(i = 0; i < parsedData[n].length; i++){
 				var tempStation = new google.maps.LatLng(parsedData[n][i].lat, parsedData[n][i].lng);
@@ -108,12 +120,44 @@ function init(){
 						icon: altpin
 					});
 				tempMarker.setMap(map);
+
+
+			// inside creating each infobow for all the stops
+				var info = new google.maps.InfoWindow();
+				google.maps.event.addListener(tempMarker, 'click', function() {	
+					var infoWindowData;
+					var request = new XMLHttpRequest();
+					request.open("GET", "https://defense-in-derpth.herokuapp.com/redline.json", true);
+					request.onreadystatechange = function() { 
+						if (request.readyState = 4 && request.status == 200){
+							var response = request.responseText;
+							var parsedReponse = JSON.parse(response);
+							for (i = 0; i < parsedReponse.Triplist.Trips.length; i++){
+								for(j = 0; j < parsedReponse.Triplist.Trips[i].Predictions.length; j++){
+									console.log("im out here!");
+									if(parsedReponse.Triplist.Trips[i].Predictions[j].Stop == tempMarker.title){
+									// set destination and time to arrival to the station
+									infoWindowData =+ parsedReponse.Triplist.Trips[i].Predictions[j].Stop + ": " + (parsedReponse.Triplist.Trips[i].Predictions[j].Seconds)/60 + " min";
+									console.log(infoWindowData);
+									console.log("im in here!");
+									}
+								}	
+							}
+						}
+					}
+
+
+					info.setContent(infoWindowData); // this needs to display distance to nearest stop (and name)
+					info.open(map, this); // switch to this?
+				});
+
+
 				// Add lat-long pairs to another object in correct format for polyline drawing
 				latLongPairs[i] = {lat:parsedData[n][i].lat, lng:parsedData[n][i].lng};
 				// calculate distance between current stop and userLocation to find shortest distance
 				var distanceToStop = google.maps.geometry.spherical.computeDistanceBetween(userLocation, tempStation);
-				console.log(distanceToStop);
-				console.log(closestStop.distance);
+				//console.log(distanceToStop);
+				//console.log(closestStop.distance);
 				if (distanceToStop < closestStop.distance){
 					closestStop.distance = distanceToStop;
 					closestStop.station = parsedData[n][i].station;
@@ -143,10 +187,6 @@ function init(){
 
 		}
 	callback();
-
-
-
-
 	}
 
 }
