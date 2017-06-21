@@ -126,33 +126,30 @@ function init(){
 			// inside creating each infowindow for all the stops
 				var info = new google.maps.InfoWindow();
 				google.maps.event.addListener(tempMarker, 'click', function() {	
-					var infoWindowData;
-					
+					var infoWindowData = "";
+					var theActualMarker = this;
 					var request = new XMLHttpRequest();
 					request.open("GET", "https://defense-in-derpth.herokuapp.com/redline.json", true);
 					request.onreadystatechange = function() { 
-						console.log("readyState change!");
-						if (request.readyState = 4 && request.status == 200){
-							console.log("im out here!");
+						if (request.readyState == 4 && request.status == 200){
 							var response = request.responseText;
-
-							console.log(response); // THIS WORKS
-							var parsedReponse = JSON.parse(response); // FAILS HERE - gets cut off? also logs three times
-							// with varying states of being cut off? last time looks complete but then it fails in the for loop
-
-							for (i = 0; i < parsedReponse.Triplist.Trips[i].length; i++){
-								for(j = 0; j < parsedReponse.Triplist.Trips[i].Predictions.length; j++){
-									if(parsedReponse.Triplist.Trips[i].Predictions[j].Stop == tempMarker.title){
+							//console.log(response); // THIS WORKS
+							var parsedReponse = JSON.parse(response); 
+							console.log(parsedReponse);
+							for (j = 0; j < parsedReponse.TripList.Trips.length; j++){
+								//console.log("im in here!");
+								for(k = 0; k < parsedReponse.TripList.Trips[j].Predictions.length; k++){
+									if(parsedReponse.TripList.Trips[j].Predictions[k].Stop == theActualMarker.title){
 										// set destination and time to arrival to the station
-										infoWindowData =+ parsedReponse.Triplist.Trips[i].Predictions[j].Stop + ": " + (parsedReponse.Triplist.Trips[i].Predictions[j].Seconds)/60 + " min";
-										console.log("im in here!");
+										infoWindowData = infoWindowData + parsedReponse.TripList.Trips[j].Destination + ": " + Math.round(parsedReponse.TripList.Trips[j].Predictions[k].Seconds/60) + " min" + "<br>";
 									}
 								}	
 							}
-							
+							info.open(map, theActualMarker);
 							info.setContent(infoWindowData);
-							info.open(map, this);
+							
 						}
+
 					}
 					request.send(null);
 
