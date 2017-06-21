@@ -1,11 +1,54 @@
 function init(){
 	var southStation = new google.maps.LatLng(42.352271, -71.05524200000001);
+	//var userLat = 0;
+	//var userLng = 0;
+	var userLocation;
+	var closestStop;
 
 	var map = new google.maps.Map(document.getElementById("map"), {
 		zoom: 12, 
 		center: southStation,
 		mapTypeId: google.maps.MapTypeId.ROADMAP
 	});
+
+	if(navigator.geolocation){
+		navigator.geolocation.getCurrentPosition(function(position){  // change position name to make sure you understand
+			// for whatever reason, setting externally created variable in here did not work. Guessing becuase
+			// how javascripts garbage collection works (used new keyword inside if statement - deleted after?)
+			userLocation = new google.maps.LatLng(position.coords.latitude, position.coords.longitude);
+
+			// add marker and info window here?
+			var tempMarker = new google.maps.Marker({
+					position: userLocation,
+					title: "This is me."
+				});
+			tempMarker.setMap(map);
+			map.panTo(userLocation);
+
+			var info = new google.maps.InfoWindow();
+			google.maps.event.addListener(tempMarker, 'click', function() {
+					info.setContent(tempMarker.title); // this needs to display distance to nearest stop (and name)
+					info.open(map, tempMarker);
+				});
+
+
+			// partial reason, this request takes time, and things proceed BEFORE response is recieved.
+			// Asynchronous! duh!
+			/*userLat = position.coords.latitude;
+			userLng = position.coords.longitude;
+			console.log(userLat);
+			console.log(userLng);*/
+
+			
+		});
+	} 
+	else {
+		alert("Geolocation is not supported by your web browser.  What a shame!");
+	}
+
+
+	
+	
 
 	// Each object is ordered by when the stops occur during tranist. This aids in line drawing.
 	// Two separate arrays/lists used to represent the "main" line of the red line (alewife -> braintree)
@@ -35,15 +78,19 @@ function init(){
 	 '{"station":"Ashmont","lat":42.284652,"lng":-71.06448899999999}]]';
 
 	var parsedData = JSON.parse(jsonString);
-
 	var iconBase = 'https://maps.google.com/mapfiles/kml/shapes/';
 	var altpin = 'pin.png';
 
 	// pin image source: https://d30y9cdsu7xlg0.cloudfront.net/png/5091-200.png
 	
+
+	// calculate smallest distance in this loop! - dont need to modfy latLongPairs that way
+	
 	// Do the same thing for both of the separate lists of stations within the larger array
 	for(n = 0; n < 2; n++){
 		var latLongPairs = [];
+
+		// Add markers and prepare data for polylines
 		for(i = 0; i < parsedData[n].length; i++){
 			var tempStation = new google.maps.LatLng(parsedData[n][i].lat, parsedData[n][i].lng);
 			// Add markers for each station
@@ -55,24 +102,27 @@ function init(){
 			tempMarker.setMap(map);
 			// Add lat-long pairs to another object in correct format for polyline drawing
 			latLongPairs[i] = {lat:parsedData[n][i].lat, lng:parsedData[n][i].lng};
+		}
+
+
+		// for the first stop on the second line, add JFK/UMass where the lines split.
+		// Done here so it is included in line draw, but not above where a duplicate marker would be added.
+		if(n == 1){
+			latLongPairs.unshift({lat:42.320685, lng:-71.052391});
+		}
+
+		// Draw a line through the ordered lat long pairs (for both segments of the Red Line)
+		var polyline = new google.maps.Polyline({
+	          path: latLongPairs,
+	          geodesic: true,
+	          strokeColor: '#FF0000',
+	          strokeOpacity: 1.0,
+	          strokeWeight: 2
+	        });
+
+		polyline.setMap(map);
+
+
 	}
-
-	// for the first stop on the second line, add JFK/UMass where the lines split.
-	// Done here so it is included in line draw, but not above where a duplicate marker would be added.
-	if(n == 1){
-		latLongPairs.unshift({lat:42.320685, lng:-71.052391});
-	}
-
-	// Draw a line through the ordered lat long pairs (for both segments of the Red Line)
-	var polyline = new google.maps.Polyline({
-          path: latLongPairs,
-          geodesic: true,
-          strokeColor: '#FF0000',
-          strokeOpacity: 1.0,
-          strokeWeight: 2
-        });
-
-	polyline.setMap(map);
-}
 
 }
