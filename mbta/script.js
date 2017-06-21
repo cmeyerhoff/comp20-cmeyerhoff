@@ -58,24 +58,24 @@ function init(){
 			// for whatever reason, setting externally created variable in here did not work. Guessing becuase
 			// how javascripts garbage collection works (used new keyword inside if statement - deleted after?)
 			userLocation = new google.maps.LatLng(position.coords.latitude, position.coords.longitude);
-			var tempMarker = new google.maps.Marker({ // Add marker
+			var marker = new google.maps.Marker({ // Add marker
 					position: userLocation,
 					title: "This is me."
 				});
-			tempMarker.setMap(map);
+			marker.setMap(map);
 			map.panTo(userLocation);
 
 			
 			// Adding info winow with good data and draw polyline on callback from processData()
 			processData(function(){
-				var info = new google.maps.InfoWindow();
-				google.maps.event.addListener(tempMarker, 'click', function() {
+				var myinfo = new google.maps.InfoWindow();
+				google.maps.event.addListener(marker, 'click', function() {
 					// source for conversion: https://stackoverflow.com/questions/20674439/how-to-convert-meter-to-miles
 					// random comment suggested good method for getting decimal places:
 					// https://stackoverflow.com/questions/1726630/formatting-a-number-with-exactly-two-decimals-in-javascript
 					var temp = closestStop.station + " - distance: " + Math.round((closestStop.distance/1609.344)*100)/100 + " miles";
-					info.setContent(temp); // this needs to display distance to nearest stop (and name)
-					info.open(map, tempMarker); // switch to this?
+					myinfo.setContent(temp); // this needs to display distance to nearest stop (and name)
+					myinfo.open(map, marker); // switch to this?
 				});
 				var polyline = new google.maps.Polyline({
 		          path: [userLocation,{lat: closestStop.lat, lng: closestStop.lng}],
@@ -109,8 +109,9 @@ function init(){
 		for(n = 0; n < 2; n++){
 			var latLongPairs = [];
 
-			// calculate smallest distance in this loop! - dont need to modfy latLongPairs that way
-			// Add markers and prepare data for polylines
+			// calculate smallest distance in this loop! - dont need to modfy latLongPairs that way 
+
+			// this loops through every single station once (adds markers and prepare data for polylines)
 			for(i = 0; i < parsedData[n].length; i++){
 				var tempStation = new google.maps.LatLng(parsedData[n][i].lat, parsedData[n][i].lng);
 				// Add markers for each station
@@ -122,33 +123,41 @@ function init(){
 				tempMarker.setMap(map);
 
 
-			// inside creating each infobow for all the stops
+			// inside creating each infowindow for all the stops
 				var info = new google.maps.InfoWindow();
 				google.maps.event.addListener(tempMarker, 'click', function() {	
 					var infoWindowData;
+					
 					var request = new XMLHttpRequest();
 					request.open("GET", "https://defense-in-derpth.herokuapp.com/redline.json", true);
 					request.onreadystatechange = function() { 
+						console.log("readyState change!");
 						if (request.readyState = 4 && request.status == 200){
+							console.log("im out here!");
 							var response = request.responseText;
-							var parsedReponse = JSON.parse(response);
-							for (i = 0; i < parsedReponse.Triplist.Trips.length; i++){
+
+							console.log(response); // THIS WORKS
+							var parsedReponse = JSON.parse(response); // FAILS HERE - gets cut off? also logs three times
+							// with varying states of being cut off? last time looks complete but then it fails in the for loop
+
+							for (i = 0; i < parsedReponse.Triplist.Trips[i].length; i++){
 								for(j = 0; j < parsedReponse.Triplist.Trips[i].Predictions.length; j++){
-									console.log("im out here!");
 									if(parsedReponse.Triplist.Trips[i].Predictions[j].Stop == tempMarker.title){
-									// set destination and time to arrival to the station
-									infoWindowData =+ parsedReponse.Triplist.Trips[i].Predictions[j].Stop + ": " + (parsedReponse.Triplist.Trips[i].Predictions[j].Seconds)/60 + " min";
-									console.log(infoWindowData);
-									console.log("im in here!");
+										// set destination and time to arrival to the station
+										infoWindowData =+ parsedReponse.Triplist.Trips[i].Predictions[j].Stop + ": " + (parsedReponse.Triplist.Trips[i].Predictions[j].Seconds)/60 + " min";
+										console.log("im in here!");
 									}
 								}	
 							}
+							
+							info.setContent(infoWindowData);
+							info.open(map, this);
 						}
 					}
+					request.send(null);
 
-
-					info.setContent(infoWindowData); // this needs to display distance to nearest stop (and name)
-					info.open(map, this); // switch to this?
+					//console.log(infoWindowData);
+					 // switch to this?
 				});
 
 
