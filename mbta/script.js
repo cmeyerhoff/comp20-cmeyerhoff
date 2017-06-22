@@ -40,24 +40,13 @@ function init(){
 		mapTypeId: google.maps.MapTypeId.ROADMAP
 	});
 
-
-	
-	
-
-
-	//Triplist.Trips[i]
-
-	// referenced geolocation_map.html in examples
-
-	// this setup takes time and holds up putting other markers/stations on the map, but it allows the processing
+	// This setup (geolocation early on) takes time and holds up putting other markers/stations on the map, but it allows the processing
 	// of data/looping through all the station JSON data once, as opposed to multiple times (once to populate the page,
 	// and another to calculate the distance from the user to every station. Could be changed for user experience, but 
 	// would be slightly less efficient resource wise - unless the time waiting is wasted anyway...)
 	if(navigator.geolocation){
-		navigator.geolocation.getCurrentPosition(function(position){  // change position name to make sure you understand
-			// for whatever reason, setting externally created variable in here did not work. Guessing becuase
-			// how javascripts garbage collection works (used new keyword inside if statement - deleted after?)
-			userLocation = new google.maps.LatLng(position.coords.latitude, position.coords.longitude);
+		navigator.geolocation.getCurrentPosition(function(pos){  // change position name to make sure you understand
+			userLocation = new google.maps.LatLng(pos.coords.latitude, pos.coords.longitude);
 			var marker = new google.maps.Marker({ // Add marker
 					position: userLocation,
 					title: "This is me."
@@ -66,16 +55,13 @@ function init(){
 			map.panTo(userLocation);
 
 			
-			// Adding info winow with good data and draw polyline on callback from processData()
+			// Adding info window with good data and draw polyline on callback from processData()
 			processData(function(){
 				var myinfo = new google.maps.InfoWindow();
 				google.maps.event.addListener(marker, 'click', function() {
-					// source for conversion: https://stackoverflow.com/questions/20674439/how-to-convert-meter-to-miles
-					// random comment suggested good method for getting decimal places:
-					// https://stackoverflow.com/questions/1726630/formatting-a-number-with-exactly-two-decimals-in-javascript
 					var temp = closestStop.station + " - distance: " + Math.round((closestStop.distance/1609.344)*100)/100 + " miles";
-					myinfo.setContent(temp); // this needs to display distance to nearest stop (and name)
-					myinfo.open(map, marker); // switch to this?
+					myinfo.setContent(temp);
+					myinfo.open(map, marker);
 				});
 				var polyline = new google.maps.Polyline({
 		          path: [userLocation,{lat: closestStop.lat, lng: closestStop.lng}],
@@ -87,31 +73,19 @@ function init(){
 		        polyline.setMap(map);
 
 			}); 
-			// partial reason, this request takes time, and things proceed BEFORE response is recieved.
-			// Asynchronous! duh!
-			/*userLat = position.coords.latitude;
-			userLng = position.coords.longitude;
-			console.log(userLat);
-			console.log(userLng);*/
-
-			
 		});
 	} 
-
-
 	else {
 		alert("Geolocation not supported/unavailable.");
 	}
 
-	
 	function processData(callback){
 	// Do the same thing for both of the separate lists of stations within the larger array
 		for(n = 0; n < 2; n++){
-			var latLongPairs = [];
+			var latLongPairs = []; // created for polyline drawing
 
-			// calculate smallest distance in this loop! - dont need to modfy latLongPairs that way 
-
-			// this loops through every single station once (adds markers and prepare data for polylines)
+			// this loops through every single station once 
+			// (adds markers, prepare data for polylines, and calculate closest stop without modifying latLongPairs)
 			for(i = 0; i < parsedData[n].length; i++){
 				var tempStation = new google.maps.LatLng(parsedData[n][i].lat, parsedData[n][i].lng);
 				// Add markers for each station
@@ -123,7 +97,7 @@ function init(){
 				tempMarker.setMap(map);
 
 
-			// inside creating each infowindow for all the stops
+			// create infowindow for each station, populate it with updated schedule
 				var info = new google.maps.InfoWindow();
 				google.maps.event.addListener(tempMarker, 'click', function() {	
 					var infoWindowData = "";
@@ -133,11 +107,8 @@ function init(){
 					request.onreadystatechange = function() { 
 						if (request.readyState == 4 && request.status == 200){
 							var response = request.responseText;
-							//console.log(response); // THIS WORKS
 							var parsedReponse = JSON.parse(response); 
-							console.log(parsedReponse);
 							for (j = 0; j < parsedReponse.TripList.Trips.length; j++){
-								//console.log("im in here!");
 								for(k = 0; k < parsedReponse.TripList.Trips[j].Predictions.length; k++){
 									if(parsedReponse.TripList.Trips[j].Predictions[k].Stop == theActualMarker.title){
 										// set destination and time to arrival to the station
@@ -145,21 +116,16 @@ function init(){
 									}
 								}	
 							}
-							info.open(map, theActualMarker);
+							info.open(map, theActualMarker); // Needed because this was not referring to the marker
 							info.setContent(infoWindowData);
-							
 						}
-
 					}
 					request.send(null);
-
-					//console.log(infoWindowData);
-					 // switch to this?
 				});
-
 
 				// Add lat-long pairs to another object in correct format for polyline drawing
 				latLongPairs[i] = {lat:parsedData[n][i].lat, lng:parsedData[n][i].lng};
+
 				// calculate distance between current stop and userLocation to find shortest distance
 				var distanceToStop = google.maps.geometry.spherical.computeDistanceBetween(userLocation, tempStation);
 				//console.log(distanceToStop);
@@ -171,8 +137,6 @@ function init(){
 					closestStop.lng = parsedData[n][i].lng;
 				}
 			}
-
-			
 
 			// for the first stop on the second line, add JFK/UMass where the lines split.
 			// Done here so it is included in line draw, but not above where a duplicate marker would be added.
@@ -194,5 +158,4 @@ function init(){
 		}
 	callback();
 	}
-
 }
