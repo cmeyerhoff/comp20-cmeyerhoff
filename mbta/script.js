@@ -45,7 +45,7 @@ function init(){
 	// and another to calculate the distance from the user to every station. Could be changed for user experience, but 
 	// would be slightly less efficient resource wise - unless the time waiting is wasted anyway...)
 	if(navigator.geolocation){
-		navigator.geolocation.getCurrentPosition(function(pos){  // change position name to make sure you understand
+		navigator.geolocation.getCurrentPosition(function(pos){
 			userLocation = new google.maps.LatLng(pos.coords.latitude, pos.coords.longitude);
 			var marker = new google.maps.Marker({ // Add marker
 					position: userLocation,
@@ -54,7 +54,7 @@ function init(){
 			marker.setMap(map);
 			map.panTo(userLocation);
 
-			
+
 			// Adding info window with good data and draw polyline on callback from processData()
 			processData(function(){
 				var myinfo = new google.maps.InfoWindow();
