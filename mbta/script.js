@@ -103,7 +103,9 @@ function init(){
 					var infoWindowData = "";
 					var theActualMarker = this;
 					var request = new XMLHttpRequest();
-					request.open("GET", "https://defense-in-derpth.herokuapp.com/redline.json", true);
+					// http://developer.mbta.com/lib/rthr/red.json
+					// https://gentle-lowlands-77626.herokuapp.com/redline.json
+					request.open("GET", "https://gentle-lowlands-77626.herokuapp.com/redline.json", true);
 					request.onreadystatechange = function() { 
 						if (request.readyState == 4 && request.status == 200){
 							var response = request.responseText;
