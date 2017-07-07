@@ -5,7 +5,8 @@
 	<link rel="stylesheet" href="style.css" type="text/css" />
 </head>
 <body>
-	<h1>Assignment 4: Security and Privacy Assessment of a Web Application</h1>
+	<h1>Comp 20 Assignment 4: Security and Privacy Assessment of a Web Application</h1>
+	<h5>Created By Chris Meyerhoff</h5>
 	<h2> Introduction </h2>
 		<p>The product that is being tested here is "Not Foursquare." It is basically a tool where users can check in and log their coordinates, and accessing the main page yields all of the people who have checked in and their coordinates. The users login name and coordinates are stored in a connected database.</p>
 		<p>It is my duty to examine the security of this web service. It is unclear whether the site was intended to allow only certain users to log their coordinates or to allow everyone to log their coordinates, but the security analysis will examine both use cases.</p>
@@ -57,28 +58,19 @@
 		<h4>Injection Vulnerability - All data accessible</h4>
 			<p> This issue is that there is the ability to perform injections on the noSQL database underlying the Not Foursquare platform. In this use case it is only of moderate severity, as I was only able to exposes all of the data in the collection on the database, which was already public, but I believe someone more skilled could execute other javascript commands on the databse. I found this by looking for places where something was done with user input with little or no validation. The problem can be examined in the picture below. As one can see, user input is used more or less unfiltered in performing a query on the database via collection.find(). Changing the loginEntry variable by modifying the query string on the GET request allows the user to cause unintended behavior.</p>
 			<img src="Location2.png" alt="Second vulnerability location" id="scale_picture_50">
-			<p> This path is normally intended to allow users to search for specific things in the database. However, by searching for results that are not equal to something that is not in the database, we gain access to everything in the collection (see picture below). This would yield problems if there were sensitive data in the collection, or if only certain information in the collection were public, as everything in the collection would be exposed.</p>
+			<p> This path is normally intended to allow users to search for specific things in the database. However, by searching for results that are not equal to something that is not in the database, we gain access to everything in the collection (see picture below). This would yield problems if there were sensitive data in the collection, or if only certain information in the collection were public, as everything in the collection would be exposed. While I could not get any other exploits to work here such as searching in the database using an infinite loop, I believe someone more skilled could figure it out, and it would thus make this a more severe vulnerability.</p>
 			<img src="Injection.png" alt="Injection example" id="scale_picture_50">
-			<p></p>
-		<h4>Attacking The Database</h4>
-		Psuedo Cross Site Request Forgery
-		<h4>Other Issues</h4>
-
-		For each issue that you find, document:
-		Issue (e.g., database injection, really bad programming practice)
-		Location / page where issue was found
-		Severity of issue (e.g., low, medium , or high). Justify your answer.
-		Description of issue. How did you find it? A screenshot of problem is excellent.
-		Proof of vulnerability. Screenshots are important.
-		Resolution. Make recommendation(s) on how issue can be resolved. Show code if possible.
+			<p>Depending on how much power the application owner wants to give to their users for searching checkins, this can be resolved by restricting acceptable user input (eliminating certain characters such as $,[], etc or certain operators like $where) such that they could only search for certain alphanumeric based login names. Another solution would be to escape the needed characters before sending the query to the database, thus elminating the ability of the javascript or other attempts to produce unintended effects to run on the database, and merely searching for the whole expression the list of login names.</p>
+		<h4>Structural issues/Attacking the database</h4>
+			<p>This issue, is primarily structural/coding practices, and it goes two ways. One, because anyone has the ability to post to the site at /sendLocation (see the same code snippet in the XSS example), posting in a loop on the command line is allowed. Also, these posts can have arbitrary length and thus be large. This means that the server could be flooded with posts, and potentially run out of resources (both processing capacity and storage space). The other problem goes on the serving data to the client side, rather than sending data to the server. When you post anything, from what I can tell, the server responds with the entire contents of the collection in JSON. This consumes roughly the equivalent bandwidth as performing a GET request to the main page, however with a get request, you are not increasing the size of data stored on the databse. This property lends itself to exploitation, and I would rate it as moderately severe, as it could fill up the database, and consume most of the server processing power resulting in a DDOS if combined with XSS as an example above suggested (the one where the client repeatedly posts). The shell script I used to repeatedly post in a loop was as follows:</p>
+			<img src="Script_post.png" alt="Script used to post" id="scale_picture_50">
+			<p>While the counter is limited to 100 here, it could be set to an unreasonably high number that would take a very long time to complete, or be changed to an infinite while loop. Likewise, I only post a small string of characters "crashtestdummies" to the database, but I could post a larger amount of JSON, or a large text/json file. This would increase the speed at which space is consumed on the database. One of the more sinister implementations I can think of would involve posting to the server from a file, piping it's response into the file you posted from, and doing that over and over. This would post the entire contents of the collection back to database every iteration, and increase the amount stored on the databse with squared behavior. This would not only eventually fill up the server, but it would also at some point stress the bandwidth of the server.</p>
+			<p>Combining some of the notions here with cross site scripting yields something like one of the examples given above in the XSS section, where each client is posting in a loop. All of the clients working together would effectively create a DDOS attack if powerful enough. The proof that such code can be inserted via cross site scripting can be seen in the picture below.  </p>
+			<img src="Client post.png" alt="Client post vis XSS" id="scale_picture_50">
+			<p>Even after changing the number of iterations to 10,000, it successfully runs without crashing the webpage (ie the script continues to run, and the server continues to have to deal with all the requests). What that looks like can be seen in the photo below. This certainly consumes a lot of my system resources, so I can only imagine what it would be like for the server if every visitor to the webpage made thousands or tens of thousands of requests repeatedly or even as long as their browser is open! Not only could it consume resources, bandwidth, and memory, but it could even potentially cause the server to overheat/shutdown. </p>
+			<img src="Posting_largeloop.png" alt="Client post effects" id="scale_picture_50">
+			<p>This issue could be partially alleviated by not responding to posts with the contents of the entire database. This would lower the amount of data transfer needed for every request, and would prevent the attack where the entire content of the database is posted back to the server in a loop. To fully resolve this problem, the number of requests/posts allowed per user or IP could be limited or only allowed every 10 seconds etc. </p>
 	<h2>Conclusion </h2>
-		You can also list future considerations and recommendations with costs.
-
-
-
-
-prevents one website from using cookies to be able to make requests to another site using your credentials
-other websites can make post requests and view results rather than just users on this webpage
-not enough verification on "login term", 
+		While there are a number of vulnerabilities to the web service, they are relatively simple and cheap to fix. The consequences of not fixing them, however, are risks to stability of the service, potential damage to the server hardware if hit by a large DDOS attack (will always remain, but harder to do if the number of requests are limited), and user security (phishing attacks possible etc). It is thus my reccommendation that the problems above be addressed as swiftly as possible.
 </body>
 </html>
